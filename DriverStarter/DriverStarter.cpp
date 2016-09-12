@@ -13,7 +13,7 @@
 #define IOCTL_CODE CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #define DRIVER_NAME TEXT("testdrv")
-#define DRIVER_FILENAME TEXT("C:\\Users\\Administrator\\Desktop\\Driver2\\TestDriver.sys")
+#define DRIVER_FILENAME TEXT("TestDriver.sys")
 
 
 const char message[] = "Greetings from user mode";
@@ -23,7 +23,7 @@ void debug(char *text) {
 
 	//get error message string for last error
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL, GetLastError(), LANG_USER_DEFAULT,
+		NULL, GetLastError(), LANG_ENGLISH,
 		(LPTSTR)&msgbuf, 0, NULL);
 
 	printf("%s: %S\n", text, msgbuf);
@@ -68,12 +68,16 @@ void CommunicateWithDriver()
 
 int wmain(int argc, wchar_t* argv[])
 {
+	TCHAR currentDirectory[MAX_PATH], driverFullPath[MAX_PATH];
+	GetCurrentDirectory(sizeof(TCHAR) * MAX_PATH, currentDirectory);
+	swprintf_s(driverFullPath, TEXT("%s\\%s"), currentDirectory, DRIVER_FILENAME);
+	
 	auto hSCMAnager = OpenSCManager(nullptr, nullptr, SC_MANAGER_CREATE_SERVICE);
 	printf("Load driver...\n");
 	if(hSCMAnager)
 	{
 		printf("Create service...\n");
-		wprintf(TEXT("Driver path: %s\n"), DRIVER_FILENAME);
+		wprintf(TEXT("Driver path: %s\n"), driverFullPath);
 
 		auto hService = CreateService(
 			hSCMAnager,
@@ -83,7 +87,7 @@ int wmain(int argc, wchar_t* argv[])
 			SERVICE_KERNEL_DRIVER,
 			SERVICE_DEMAND_START,
 			SERVICE_ERROR_IGNORE,
-			DRIVER_FILENAME,
+			driverFullPath,
 			nullptr, nullptr, nullptr, nullptr, nullptr);
 		debug("Create service");
 
@@ -117,9 +121,7 @@ int wmain(int argc, wchar_t* argv[])
 	else
 	{
 		debug("Error occured");
-	}
-
-	
+	}	
 
 	return 0;
 }
