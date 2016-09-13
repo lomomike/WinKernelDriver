@@ -17,10 +17,26 @@ DRIVER_DISPATCH TestdrvDispatch;
 #pragma alloc_text(PAGE, TestdrvUnload)
 #pragma alloc_text(PAGE, TestdrvDispatch)
 
+#pragma pack(1)
+typedef struct _IDTR {
+	UINT16 limit;
+	UINT64 addr;
+} IDTR, * PIDTR;
+#pragma pack()
+
+extern void __fastcall GetIdtr(PIDTR pIdtr);
+
 
 void DebugInfo(char *str)
 {
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: %s\n", str);
+}
+
+IDTR GetIDT()
+{
+	IDTR idtr;
+	GetIdtr(&idtr);	
+	return idtr;
 }
 
 NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
@@ -133,6 +149,9 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 		DebugInfo("error creating symbolic link");
 		return status;
 	}
+
+	IDTR idtr = GetIDT();
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: IDTR addr %x, limit %d\n", idtr.addr, idtr.limit);
 
 	return STATUS_SUCCESS;
 }
