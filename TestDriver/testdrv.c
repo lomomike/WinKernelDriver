@@ -151,7 +151,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 	}
 
 	IDTR idtr = GetIDT();
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: IDTR addr %x, limit %d\n", idtr.addr, idtr.limit);
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: IDTR addr %llx, limit %d\n", idtr.addr, idtr.limit);
 
 	return STATUS_SUCCESS;
 }
