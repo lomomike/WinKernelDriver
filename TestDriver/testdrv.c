@@ -1,4 +1,4 @@
-#include <wdm.h>
+#include <ntddk.h>
 
 #define DEVICE_NAME L"\\Device\\Testdrv"
 #define DOS_DEVICE_NAME L"\\DosDevices\\Testdrv"
