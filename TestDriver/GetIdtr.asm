@@ -1,8 +1,11 @@
 .code
-GetIdtr PROC
-	cli
+__getIdtr PROC
 	sidt [RCX]
-	sti
 	ret
-GetIdtr ENDP
+__getIdtr ENDP
+
+__getGdtr PROC
+	sgdt [RCX]
+	ret
+__getGdtr ENDP
 END

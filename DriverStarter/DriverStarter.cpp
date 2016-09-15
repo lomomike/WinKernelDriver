@@ -18,6 +18,22 @@
 
 const char message[] = "Greetings from user mode";
 
+#pragma pack(1)
+typedef struct _DESCRIPTOR {
+	UINT16 limit;
+	UINT64 addr;
+} DESCRIPTOR, *PDESCRIPTOR;
+
+typedef struct _CPU_INFO {
+	DESCRIPTOR Idtr;
+	DESCRIPTOR Gdtr;
+} CPU_INFO, *PCCPU_INFO;
+#pragma pack()
+
+#define CPU_INFO_ sizeof(CPU_INFO)
+
+#define IOCTL_GET_CPU_INFO CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
 void debug(char *text) {
 	LPTSTR msgbuf;
 
@@ -32,7 +48,7 @@ void debug(char *text) {
 void CommunicateWithDriver()
 {
 	HANDLE hDevice;
-	ULONG outBuf;
+	CPU_INFO info;
 	DWORD returned;
 
 	hDevice = CreateFile(DEVICE_NAME, GENERIC_READ | GENERIC_WRITE,
@@ -45,21 +61,21 @@ void CommunicateWithDriver()
 	else {
 		if (0 == DeviceIoControl(
 			hDevice, 
-			IOCTL_CODE, 
-			(LPVOID)message, 
-			sizeof(message),
-			&outBuf, 
-			sizeof(ULONG), 
+			IOCTL_GET_CPU_INFO, 
+			nullptr, 
+			0,
+			&info, 
+			CPU_INFO_, 
 			&returned, 
-			NULL)) 
+			nullptr)) 
 		{
 			debug("ioctl error");
 		}
 		else
 		{
-			char output[256];
-			sprintf(output, "returner %u bytes, result from driver: %x", returned, outBuf);
-			debug(output);
+			printf("CPU info\n");
+			printf("testdrv: IDTR addr %llx, limit %d\n", info.Idtr.addr, info.Idtr.limit);
+			printf("testdrv: GDTR addr %llx, limit %d\n", info.Gdtr.addr, info.Gdtr.limit);
 		}		
 
 		CloseHandle(hDevice);

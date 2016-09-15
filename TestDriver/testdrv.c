@@ -1,9 +1,11 @@
 #include <ntddk.h>
+#include "testdrv.h"
 
 #define DEVICE_NAME L"\\Device\\Testdrv"
 #define DOS_DEVICE_NAME L"\\DosDevices\\Testdrv"
 
 #define IOCTL_TESTDRV CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_GET_CPU_INFO CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 //macros for OACR
 DRIVER_INITIALIZE DriverEntry;
@@ -17,14 +19,6 @@ DRIVER_DISPATCH TestdrvDispatch;
 #pragma alloc_text(PAGE, TestdrvUnload)
 #pragma alloc_text(PAGE, TestdrvDispatch)
 
-#pragma pack(1)
-typedef struct _IDTR {
-	UINT16 limit;
-	UINT64 addr;
-} IDTR, * PIDTR;
-#pragma pack()
-
-extern void __fastcall GetIdtr(PIDTR pIdtr);
 
 
 void DebugInfo(char *str)
@@ -32,11 +26,24 @@ void DebugInfo(char *str)
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: %s\n", str);
 }
 
-IDTR GetIDT()
+NTSTATUS GetCpuInfo(PVOID outBuffer, ULONG outBufferLength)
 {
-	IDTR idtr;
-	GetIdtr(&idtr);	
-	return idtr;
+	if (outBufferLength < CPU_INFO_)
+	{
+		RtlZeroMemory((void *)outBufferLength, outBufferLength);
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	CPU_INFO info;
+
+	__getIdtr(&info.Idtr);
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: IDTR addr %llx, limit %d\n", info.Idtr.addr, info.Idtr.limit);
+
+	__getGdtr(&info.Gdtr);
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: GDTR addr %llx, limit %d\n", info.Gdtr.addr, info.Gdtr.limit);
+
+	RtlCopyMemory(outBuffer, &info, outBufferLength);
+	return STATUS_SUCCESS;
 }
 
 NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
@@ -52,6 +59,7 @@ NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 
 	iostack = IoGetCurrentIrpStackLocation(Irp);
 	Irp->IoStatus.Information = 0;
+	ULONG ioctlCode = iostack->Parameters.DeviceIoControl.IoControlCode;
 
 	switch (iostack->MajorFunction)
 	{
@@ -60,7 +68,7 @@ NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 			status = STATUS_SUCCESS;
 			break;
 		case IRP_MJ_DEVICE_CONTROL:
-			if (iostack->Parameters.DeviceIoControl.IoControlCode == IOCTL_TESTDRV)
+			if (ioctlCode == IOCTL_TESTDRV)
 			{
 				len = iostack->Parameters.DeviceIoControl.InputBufferLength;
 				buf = (PCHAR)Irp->AssociatedIrp.SystemBuffer;
@@ -85,11 +93,21 @@ NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 				}
 				
 			}
+			else if (ioctlCode == IOCTL_GET_CPU_INFO)
+			{
+				ULONG outputLength = iostack->Parameters.DeviceIoControl.OutputBufferLength;
+				PVOID outputBufer = Irp->AssociatedIrp.SystemBuffer;
+				status = GetCpuInfo(outputBufer, outputLength);
+				if (NT_SUCCESS(status))
+				{
+					Irp->IoStatus.Information = CPU_INFO_;
+				}
+			}
 			else
 			{
 				status = STATUS_INVALID_PARAMETER;
 			}
-			break;
+			break;			
 		default:
 			status = STATUS_INVALID_DEVICE_REQUEST;
 	}
@@ -149,9 +167,6 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 		DebugInfo("error creating symbolic link");
 		return status;
 	}
-
-	IDTR idtr = GetIDT();
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: IDTR addr %llx, limit %d\n", idtr.addr, idtr.limit);
 
 	return STATUS_SUCCESS;
 }

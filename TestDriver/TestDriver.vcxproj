@@ -152,6 +152,9 @@
   <ItemGroup>
     <MASM Include="GetIdtr.asm" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="testdrv.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
