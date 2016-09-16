@@ -20,6 +20,9 @@ DRIVER_DISPATCH TestdrvDispatch;
 
 extern void __fastcall __getIdtr(PDESCRIPTOR pIdtr);
 extern void __fastcall __getGdtr(PDESCRIPTOR pIdtr);
+extern X64_REGISTER __fastcall __getCr0();
+extern X64_REGISTER __fastcall __getCr2();
+extern X64_REGISTER __fastcall __getCr3();
 
 
 void DebugInfo(char *str)
@@ -42,6 +45,12 @@ NTSTATUS GetCpuInfo(PVOID outBuffer, ULONG outBufferLength)
 
 	__getGdtr(&info.Gdtr);
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: GDTR addr %llx, limit %d\n", info.Gdtr.addr, info.Gdtr.limit);
+
+	info.cr0 = __getCr0();
+	info.cr2 = __getCr2();
+	info.cr3 = __getCr3();
+
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: CR0 %llx, CR2 %llx, CR3 %llx\n", info.cr0, info.cr2, info.cr3);
 
 	RtlCopyMemory(outBuffer, &info, outBufferLength);
 	return STATUS_SUCCESS;

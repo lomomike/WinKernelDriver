@@ -54,8 +54,9 @@ void CommunicateWithDriver()
 		else
 		{
 			printf("CPU info\n");
-			printf("testdrv: IDTR addr %llx, limit %d\n", info.Idtr.addr, info.Idtr.limit);
-			printf("testdrv: GDTR addr %llx, limit %d\n", info.Gdtr.addr, info.Gdtr.limit);
+			printf("\tIDTR addr %llx, limit %d\n", info.Idtr.addr, info.Idtr.limit);
+			printf("\tGDTR addr %llx, limit %d\n", info.Gdtr.addr, info.Gdtr.limit);
+			printf("\tCR0 %llx, CR2 %llx, CR3 %llx\n", info.cr0, info.cr2, info.cr3);
 		}		
 
 		CloseHandle(hDevice);
@@ -69,12 +70,9 @@ int wmain(int argc, wchar_t* argv[])
 	swprintf_s(driverFullPath, TEXT("%s\\%s"), currentDirectory, DRIVER_FILENAME);
 	
 	auto hSCMAnager = OpenSCManager(nullptr, nullptr, SC_MANAGER_CREATE_SERVICE);
-	printf("Load driver...\n");
+	wprintf(TEXT("Loading driver \"%s\"\n"), driverFullPath);
 	if(hSCMAnager)
 	{
-		printf("Create service...\n");
-		wprintf(TEXT("Driver path: %s\n"), driverFullPath);
-
 		auto hService = CreateService(
 			hSCMAnager,
 			DRIVER_NAME,
@@ -85,8 +83,7 @@ int wmain(int argc, wchar_t* argv[])
 			SERVICE_ERROR_IGNORE,
 			driverFullPath,
 			nullptr, nullptr, nullptr, nullptr, nullptr);
-		debug("Create service");
-
+		
 		if (!hService)
 		{
 			hService = OpenService(hSCMAnager, DRIVER_NAME, SERVICE_START | DELETE);
@@ -94,11 +91,8 @@ int wmain(int argc, wchar_t* argv[])
 
 		if (hService)
 		{
-			printf("Start service...\n");
-
 			StartService(hService, 0, nullptr);
-			debug("Starting service");
-
+			
 			CommunicateWithDriver();
 
 			SERVICE_STATUS ss;

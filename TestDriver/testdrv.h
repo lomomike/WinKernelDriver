@@ -1,5 +1,7 @@
 #pragma once
 
+typedef ULONG64 X64_REGISTER, *PX64_REGISTER;
+
 #pragma pack(1)
 typedef struct _DESCRIPTOR {
 	UINT16 limit;
@@ -9,6 +11,10 @@ typedef struct _DESCRIPTOR {
 typedef struct _CPU_INFO {
 	DESCRIPTOR Idtr;
 	DESCRIPTOR Gdtr;
+	X64_REGISTER cr0;
+	X64_REGISTER cr2;
+	X64_REGISTER cr3;
+
 } CPU_INFO, * PCCPU_INFO;
 #pragma pack()
 
