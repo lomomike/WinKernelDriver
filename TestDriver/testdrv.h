@@ -1,7 +1,5 @@
 #pragma once
 
-#include <ntddk.h>
-
 #pragma pack(1)
 typedef struct _DESCRIPTOR {
 	UINT16 limit;
@@ -16,6 +14,6 @@ typedef struct _CPU_INFO {
 
 #define CPU_INFO_ sizeof(CPU_INFO)
 
+#define IOCTL_TESTDRV CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_GET_CPU_INFO CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-extern void __fastcall __getIdtr(PDESCRIPTOR pIdtr);
-extern void __fastcall __getGdtr(PDESCRIPTOR pIdtr);

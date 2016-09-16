@@ -4,9 +4,6 @@
 #define DEVICE_NAME L"\\Device\\Testdrv"
 #define DOS_DEVICE_NAME L"\\DosDevices\\Testdrv"
 
-#define IOCTL_TESTDRV CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_GET_CPU_INFO CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
-
 //macros for OACR
 DRIVER_INITIALIZE DriverEntry;
 DRIVER_UNLOAD TestdrvUnload;
@@ -15,10 +12,14 @@ __drv_dispatchType(IRP_MJ_CLOSE)
 __drv_dispatchType(IRP_MJ_DEVICE_CONTROL)
 DRIVER_DISPATCH TestdrvDispatch;
 
+#ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
 #pragma alloc_text(PAGE, TestdrvUnload)
 #pragma alloc_text(PAGE, TestdrvDispatch)
+#endif // ALOC_PRAGMA
 
+extern void __fastcall __getIdtr(PDESCRIPTOR pIdtr);
+extern void __fastcall __getGdtr(PDESCRIPTOR pIdtr);
 
 
 void DebugInfo(char *str)

@@ -4,35 +4,15 @@
 #include "stdafx.h"
 
 
-#define UNICODE
-#define _UNICODE
-
 #include <windows.h>
+#include "testdrv.h"
 
 #define DEVICE_NAME L"\\\\.\\Testdrv"
-#define IOCTL_CODE CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #define DRIVER_NAME TEXT("testdrv")
 #define DRIVER_FILENAME TEXT("TestDriver.sys")
 
-
 const char message[] = "Greetings from user mode";
-
-#pragma pack(1)
-typedef struct _DESCRIPTOR {
-	UINT16 limit;
-	UINT64 addr;
-} DESCRIPTOR, *PDESCRIPTOR;
-
-typedef struct _CPU_INFO {
-	DESCRIPTOR Idtr;
-	DESCRIPTOR Gdtr;
-} CPU_INFO, *PCCPU_INFO;
-#pragma pack()
-
-#define CPU_INFO_ sizeof(CPU_INFO)
-
-#define IOCTL_GET_CPU_INFO CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 void debug(char *text) {
 	LPTSTR msgbuf;
