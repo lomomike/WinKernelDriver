@@ -8,17 +8,28 @@ typedef struct _DESCRIPTOR {
 	UINT64 addr;
 } DESCRIPTOR, *PDESCRIPTOR;
 
+typedef struct _GATE {
+	UINT16 Offset1;
+	UINT16 SegmentSelector;
+	UINT16 Data;
+	UINT16 Offset2;
+	UINT32 Offset3;
+	UINT32 Reserved;
+} GATE, * PGATE;
+
 typedef struct _CPU_INFO {
 	DESCRIPTOR Idtr;
 	DESCRIPTOR Gdtr;
 	X64_REGISTER cr0;
 	X64_REGISTER cr2;
 	X64_REGISTER cr3;
-
+	GATE Gates[5];
 } CPU_INFO, * PCCPU_INFO;
 #pragma pack()
 
 #define CPU_INFO_ sizeof(CPU_INFO)
+
+#define GATE_ sizeof(GATE)
 
 #define IOCTL_TESTDRV CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_GET_CPU_INFO CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)

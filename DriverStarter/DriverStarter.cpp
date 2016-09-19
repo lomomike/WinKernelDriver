@@ -25,6 +25,18 @@ void debug(char *text) {
 	printf("%s: %S\n", text, msgbuf);
 }
 
+void PrintGate(int index, PGATE gate)
+{
+	printf("Gate info [%d]:\n", index);
+	printf("\tOffset 1:%lx\n", gate->Offset1);
+	printf("\tSegment selector:%lx\n", gate->SegmentSelector);
+	printf("\tData: %lx\n", gate->Data);
+	printf("\tOffset2: %lx\n", gate->Offset2);
+	printf("\tOffset3: %lx\n", gate->Offset3);
+	printf("\Reserved: %lx\n", gate->Reserved);
+	printf("\n");	
+}
+
 void CommunicateWithDriver()
 {
 	HANDLE hDevice;
@@ -57,6 +69,11 @@ void CommunicateWithDriver()
 			printf("\tIDTR addr %llx, limit %d\n", info.Idtr.addr, info.Idtr.limit);
 			printf("\tGDTR addr %llx, limit %d\n", info.Gdtr.addr, info.Gdtr.limit);
 			printf("\tCR0 %llx, CR2 %llx, CR3 %llx\n", info.cr0, info.cr2, info.cr3);
+
+			for(int index = 0; index < 5; ++index)
+			{
+				PrintGate(index, &info.Gates[index]);
+			}
 		}		
 
 		CloseHandle(hDevice);
