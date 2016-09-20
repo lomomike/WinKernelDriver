@@ -2,16 +2,31 @@
 
 typedef ULONG64 X64_REGISTER, *PX64_REGISTER;
 
+#define GATES_COUNT 5
+
 #pragma pack(1)
 typedef struct _DESCRIPTOR {
 	UINT16 limit;
 	UINT64 addr;
 } DESCRIPTOR, *PDESCRIPTOR;
 
+#pragma warning( push )
+#pragma warning( disable: 4214)
+typedef struct FLAGS_
+{
+	char IST : 3;
+	char Reserved1 : 5;
+	char Type : 4;
+	char Reserved2 : 1;
+	char DPL : 2;
+	char P : 1;	
+} FLAGS;
+#pragma warning(pop)
+
 typedef struct _GATE {
 	UINT16 Offset1;
 	UINT16 SegmentSelector;
-	UINT16 Data;
+	FLAGS Flags;
 	UINT16 Offset2;
 	UINT32 Offset3;
 	UINT32 Reserved;
@@ -23,7 +38,7 @@ typedef struct _CPU_INFO {
 	X64_REGISTER cr0;
 	X64_REGISTER cr2;
 	X64_REGISTER cr3;
-	GATE Gates[5];
+	GATE Gates[GATES_COUNT];
 } CPU_INFO, * PCCPU_INFO;
 #pragma pack()
 

@@ -50,7 +50,7 @@ NTSTATUS GetCpuInfo(PVOID outBuffer, ULONG outBufferLength)
 	info.cr2 = __getCr2();
 	info.cr3 = __getCr3();
 
-	RtlCopyMemory(&info.Gates, (void *)info.Idtr.addr, GATE_ * 5);
+	RtlCopyMemory(&info.Gates, (void *)info.Idtr.addr, GATE_ * GATES_COUNT);
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: CR0 %llx, CR2 %llx, CR3 %llx\n", info.cr0, info.cr2, info.cr3);
 
