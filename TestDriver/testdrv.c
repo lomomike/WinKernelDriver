@@ -50,11 +50,21 @@ NTSTATUS GetCpuInfo(PVOID outBuffer, ULONG outBufferLength)
 	info.cr2 = __getCr2();
 	info.cr3 = __getCr3();
 
-	RtlCopyMemory(&info.Gates, (void *)info.Idtr.addr, GATE_ * GATES_COUNT);
-
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "testdrv: CR0 %llx, CR2 %llx, CR3 %llx\n", info.cr0, info.cr2, info.cr3);
 
 	RtlCopyMemory(outBuffer, &info, outBufferLength);
+	return STATUS_SUCCESS;
+}
+
+NTSTATUS DumpMemory(PMEMORY_DUMP_IN dumpParams, PVOID outputBuffer, ULONG outputBufferLength)
+{
+	if (outputBufferLength < dumpParams->Size)
+	{
+		
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	RtlCopyMemory(outputBuffer, dumpParams->Address, dumpParams->Size);
 	return STATUS_SUCCESS;
 }
 
@@ -62,7 +72,6 @@ NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 {
 	PIO_STACK_LOCATION iostack;
 	NTSTATUS status = STATUS_NOT_SUPPORTED;
-	PCHAR buf;
 	ULONG len;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
@@ -73,6 +82,9 @@ NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 	Irp->IoStatus.Information = 0;
 	ULONG ioctlCode = iostack->Parameters.DeviceIoControl.IoControlCode;
 
+	ULONG outputLength = iostack->Parameters.DeviceIoControl.OutputBufferLength;
+	PVOID outputBufer = Irp->AssociatedIrp.SystemBuffer;
+
 	switch (iostack->MajorFunction)
 	{
 		case IRP_MJ_CREATE:
@@ -80,40 +92,30 @@ NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 			status = STATUS_SUCCESS;
 			break;
 		case IRP_MJ_DEVICE_CONTROL:
-			if (ioctlCode == IOCTL_TESTDRV)
+			if (ioctlCode == IOCTL_GET_CPU_INFO)
 			{
-				len = iostack->Parameters.DeviceIoControl.InputBufferLength;
-				buf = (PCHAR)Irp->AssociatedIrp.SystemBuffer;
-				
-				//verify null-terminated and print string to debugger
-				if (buf[len - 1] == '\0') {
-					DebugInfo(buf);
-				}
-
-				ULONG outputLength = iostack->Parameters.DeviceIoControl.OutputBufferLength;
-				PULONG outputBufer = (PULONG)Irp->AssociatedIrp.SystemBuffer;
-				if (outputLength == sizeof(ULONG))
-				{
-					RtlZeroMemory(outputBufer, sizeof(ULONG));
-					*outputBufer = (ULONG)42;
-					Irp->IoStatus.Information = sizeof(ULONG);					
-					status = STATUS_SUCCESS;
-				}
-				else
-				{
-					status = STATUS_INVALID_PARAMETER;
-				}
-				
-			}
-			else if (ioctlCode == IOCTL_GET_CPU_INFO)
-			{
-				ULONG outputLength = iostack->Parameters.DeviceIoControl.OutputBufferLength;
-				PVOID outputBufer = Irp->AssociatedIrp.SystemBuffer;
 				status = GetCpuInfo(outputBufer, outputLength);
 				if (NT_SUCCESS(status))
 				{
 					Irp->IoStatus.Information = CPU_INFO_;
 				}
+			}
+			else if (ioctlCode == IOCTL_GET_MEMORY_CONTENT)
+			{
+				len = iostack->Parameters.DeviceIoControl.InputBufferLength;
+				if (len != MEMORY_DUMP_IN_)
+				{
+					status = STATUS_INSUFFICIENT_RESOURCES;
+				}
+				else
+				{
+					PMEMORY_DUMP_IN dumpParams = (PMEMORY_DUMP_IN)Irp->AssociatedIrp.SystemBuffer;
+					status = DumpMemory(dumpParams, outputBufer, outputLength);
+					if (NT_SUCCESS(status))
+					{
+						Irp->IoStatus.Information = outputLength;
+					}					
+				}				
 			}
 			else
 			{
@@ -124,8 +126,7 @@ NTSTATUS TestdrvDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 			status = STATUS_INVALID_DEVICE_REQUEST;
 	}
 
-	Irp->IoStatus.Status = status;
-	
+	Irp->IoStatus.Status = status;	
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 	return status;

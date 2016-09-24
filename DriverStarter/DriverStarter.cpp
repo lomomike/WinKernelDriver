@@ -37,6 +37,64 @@ void PrintGate(int index, PGATE gate)
 	printf("\n");	
 }
 
+void PrintCpuInfo(PCPU_INFO info)
+{
+	if (info == nullptr)
+		return;
+
+	printf("CPU info\n");
+	printf("\tIDTR addr %llx, limit %d\n", info->Idtr.addr, info->Idtr.limit);
+	printf("\tGDTR addr %llx, limit %d\n", info->Gdtr.addr, info->Gdtr.limit);
+	printf("\tCR0 %llx, CR2 %llx, CR3 %llx\n", info->cr0, info->cr2, info->cr3);
+}
+
+VOID GetIdtEntries(HANDLE hDevice, PDESCRIPTOR idt)
+{
+	if (idt == nullptr || idt->addr == 0)
+		return;
+
+	unsigned long size = idt->limit + 1;
+
+	LPVOID outputBuffer = static_cast<LPVOID>(malloc(size));
+	if (outputBuffer == nullptr)
+		return;
+
+	MEMORY_DUMP_IN input;
+	input.Address = reinterpret_cast<PVOID>(idt->addr);
+	input.Size = size;
+
+	DWORD returned;
+	auto ok = DeviceIoControl(hDevice, IOCTL_GET_MEMORY_CONTENT, &input, MEMORY_DUMP_IN_,
+		outputBuffer, size, &returned, nullptr);
+
+	if(!ok)
+	{
+		debug("ioctl call");
+		free(outputBuffer);
+		return;
+	}
+
+	if (returned != size)
+	{
+		printf("returned %d, size %d\n", returned, size);
+		debug("Incorrect size returned");
+		free(outputBuffer);
+		return;
+	}
+
+	PGATE gates = reinterpret_cast<PGATE>(outputBuffer);
+	auto count = size / GATE_;
+
+	for(int index = 0; index < count; ++ index)
+	{
+		GATE gate = gates[index];
+
+		PrintGate(index, &gate);
+	}
+
+	free(outputBuffer);
+}
+
 void CommunicateWithDriver()
 {
 	HANDLE hDevice;
@@ -65,15 +123,10 @@ void CommunicateWithDriver()
 		}
 		else
 		{
-			printf("CPU info\n");
-			printf("\tIDTR addr %llx, limit %d\n", info.Idtr.addr, info.Idtr.limit);
-			printf("\tGDTR addr %llx, limit %d\n", info.Gdtr.addr, info.Gdtr.limit);
-			printf("\tCR0 %llx, CR2 %llx, CR3 %llx\n", info.cr0, info.cr2, info.cr3);
 
-			for(int index = 0; index < GATES_COUNT; ++index)
-			{
-				PrintGate(index, &info.Gates[index]);
-			}
+			PrintCpuInfo(&info);
+			
+			GetIdtEntries(hDevice, &info.Idtr);
 		}		
 
 		CloseHandle(hDevice);
