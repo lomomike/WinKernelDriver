@@ -25,15 +25,40 @@ void debug(char *text) {
 	printf("%s: %S\n", text, msgbuf);
 }
 
+ULONG64 inline MakeProcedureAddress(PGATE gate)
+{
+	return static_cast<ULONG64>(gate->Offset3) << 32 | 
+		   static_cast<ULONG64>(gate->Offset2) << 16 | 
+		   static_cast<ULONG64>(gate->Offset1);
+}
+
+const char * DecodeType(unsigned char type)
+{
+	
+	switch (type)
+	{
+	case 0: return "Upper 8 bytes of an 14-byte descriptor";
+	case 2: return "LDT";
+	case 9: return "64-bit TSS (Available)";
+	case 11: return "64-bit TSS (Busy)";
+	case 12: return "64-bit Call Gate";
+	case 14: return "64-bit Interrupt Gate";
+	case 15: return "64-bit Trap Gate";
+	default: return "Reserved";
+	}
+}
+
 void PrintGate(int index, PGATE gate)
 {
 	printf("Gate info [%d]:\n", index);
-	printf("\tOffset 1:%lx\n", gate->Offset1);
+	printf("\tAddress:%llx\n", MakeProcedureAddress(gate));
 	printf("\tSegment selector:%lx\n", gate->SegmentSelector);
-	printf("\tIST: %lx, Type: %lx, DPL: %lx, P: %lx\n", gate->Flags.IST, gate->Flags.Type, gate->Flags.DPL, gate->Flags.P);
-	printf("\tOffset2: %lx\n", gate->Offset2);
-	printf("\tOffset3: %lx\n", gate->Offset3);
-	printf("\tReserved: %lx\n", gate->Reserved);
+	printf("\tIST: %lx, Type: %s (%c), DPL: %lx, P: %lx\n", 
+		gate->Flags.IST, 
+		DecodeType(gate->Flags.Type), 
+		gate->Flags.Type,
+		gate->Flags.DPL, 
+		gate->Flags.P);
 	printf("\n");	
 }
 
@@ -136,7 +161,14 @@ void CommunicateWithDriver()
 int wmain(int argc, wchar_t* argv[])
 {
 
-	TCHAR currentDirectory[MAX_PATH], driverFullPath[MAX_PATH];
+	printf("%d\n", (int) sizeof(FLAGS));
+	FLAGS f = { 0 };
+	WORD data = 0x8e00;
+	memcpy(&f, &data, sizeof(FLAGS));
+
+	
+
+	/*TCHAR currentDirectory[MAX_PATH], driverFullPath[MAX_PATH];
 	GetCurrentDirectory(sizeof(TCHAR) * MAX_PATH, currentDirectory);
 	swprintf_s(driverFullPath, TEXT("%s\\%s"), currentDirectory, DRIVER_FILENAME);
 	
@@ -182,7 +214,7 @@ int wmain(int argc, wchar_t* argv[])
 	else
 	{
 		debug("Error occured");
-	}
+	}*/
 
 	return 0;
 }

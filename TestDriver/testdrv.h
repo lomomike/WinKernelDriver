@@ -12,14 +12,14 @@ typedef struct _DESCRIPTOR {
 
 #pragma warning( push )
 #pragma warning( disable: 4214)
-typedef struct FLAGS_
+typedef struct _FLAGS
 {
-	char IST : 3;
-	char Reserved1 : 5;
-	char Type : 4;
-	char Reserved2 : 1;
-	char DPL : 2;
-	char P : 1;	
+	unsigned char IST : 3;
+	unsigned char Reserved1 : 5;
+	unsigned char Type : 4;
+	unsigned char Reserved2 : 1;
+	unsigned char DPL : 2;
+	unsigned char P : 1;	
 } FLAGS;
 #pragma warning(pop)
 
