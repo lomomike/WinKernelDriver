@@ -15,9 +15,9 @@ typedef struct _DESCRIPTOR {
 typedef struct _FLAGS
 {
 	unsigned char IST : 3;
-	unsigned char Reserved1 : 5;
+	unsigned char : 5;
 	unsigned char Type : 4;
-	unsigned char Reserved2 : 1;
+	unsigned char : 1;
 	unsigned char DPL : 2;
 	unsigned char P : 1;	
 } FLAGS;

@@ -33,8 +33,7 @@ ULONG64 inline MakeProcedureAddress(PGATE gate)
 }
 
 const char * DecodeType(unsigned char type)
-{
-	
+{	
 	switch (type)
 	{
 	case 0: return "Upper 8 bytes of an 14-byte descriptor";
@@ -53,10 +52,9 @@ void PrintGate(int index, PGATE gate)
 	printf("Gate info [%d]:\n", index);
 	printf("\tAddress:%llx\n", MakeProcedureAddress(gate));
 	printf("\tSegment selector:%lx\n", gate->SegmentSelector);
-	printf("\tIST: %lx, Type: %s (%c), DPL: %lx, P: %lx\n", 
+	printf("\tIST: %lx, Type: %s, DPL: %lx, P: %lx\n", 
 		gate->Flags.IST, 
 		DecodeType(gate->Flags.Type), 
-		gate->Flags.Type,
 		gate->Flags.DPL, 
 		gate->Flags.P);
 	printf("\n");	
@@ -160,15 +158,7 @@ void CommunicateWithDriver()
 
 int wmain(int argc, wchar_t* argv[])
 {
-
-	printf("%d\n", (int) sizeof(FLAGS));
-	FLAGS f = { 0 };
-	WORD data = 0x8e00;
-	memcpy(&f, &data, sizeof(FLAGS));
-
-	
-
-	/*TCHAR currentDirectory[MAX_PATH], driverFullPath[MAX_PATH];
+	TCHAR currentDirectory[MAX_PATH], driverFullPath[MAX_PATH];
 	GetCurrentDirectory(sizeof(TCHAR) * MAX_PATH, currentDirectory);
 	swprintf_s(driverFullPath, TEXT("%s\\%s"), currentDirectory, DRIVER_FILENAME);
 	
@@ -214,8 +204,7 @@ int wmain(int argc, wchar_t* argv[])
 	else
 	{
 		debug("Error occured");
-	}*/
+	}
 
 	return 0;
 }
-
