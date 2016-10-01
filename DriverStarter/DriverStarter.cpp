@@ -50,7 +50,7 @@ const char * DecodeType(unsigned char type)
 void PrintGate(int index, PGATE gate)
 {
 	printf("Gate info [%d]:\n", index);
-	printf("\tAddress:%llx\n", MakeProcedureAddress(gate));
+	printf("\tAddress: %llx\n", MakeProcedureAddress(gate));
 	printf("\tSegment selector:%lx\n", gate->SegmentSelector);
 	printf("\tIST: %lx, Type: %s, DPL: %lx, P: %lx\n", 
 		gate->Flags.IST, 
